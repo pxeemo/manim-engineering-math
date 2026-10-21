@@ -1,0 +1,20 @@
+[project]
+name = "fourier"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Shayan", email = "pxeemo@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "manim>=0.22.0",
+    "setuptools<84.2.2",
+]
+
+[project.scripts]
+fourier = "fourier:main"
+
+[build-system]
+requires = ["uv_build>=0.12.19,<0.13.0"]
+build-backend = "uv_build"
