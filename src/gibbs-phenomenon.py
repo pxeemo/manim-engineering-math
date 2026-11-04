@@ -71,8 +71,8 @@ class FourierGibbsStepByStep(Scene):
 
         # ---------- Title + general formula (with ω) ----------
         title = Text(
-            # "سری فوریۀ موج مربعی و پدیدۀ گیبس",
-            "Fourier Series of a Square Wave and the Gibbs Phenomenon",
+            "سری فوریۀ موج مربعی و پدیدۀ گیبس",
+            # "Fourier Series of a Square Wave and the Gibbs Phenomenon",
             font_size=42,
             font="IRNazanin",
             weight=MEDIUM,
@@ -166,7 +166,7 @@ class FourierGibbsStepByStep(Scene):
         sum_curve = always_redraw(lambda: make_curve(n_tracker.get_value()))
 
         # ---------- Intro ----------
-        self.play(Write(title))
+        self.play(Write(title, reverse=True))
         self.add(title)
         self.wait(2)
         self.play(Write(general_formula))
