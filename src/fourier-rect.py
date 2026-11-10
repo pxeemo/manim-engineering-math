@@ -76,6 +76,7 @@ class FourierRect(Scene):
         # ================================================
 
         T = ValueTracker(2.5)
+        mode = ValueTracker(0)
 
         # Time domain axes
         time_axes = Axes(
@@ -120,19 +121,21 @@ class FourierRect(Scene):
         ).next_to(freq_axes, UP, buff=0.2)
 
         time_formula = MathTex(
-            r"x(t)=\operatorname{rect}\left(\frac{t}{T}\right)"
+            r"x(t)=", r"\operatorname{rect}", r"\left(\frac{t}{T}\right)"
         ).scale(0.75)
 
         time_formula.move_to(RIGHT * 3.5 + UP * 1.65)
 
-        freq_formula = MathTex(r"|X(f)|=T|\operatorname{sinc}(Tf)|").scale(0.75)
+        freq_formula = MathTex(r"|X(f)|=T|", r"\operatorname{sinc}", r"(Tf)|").scale(
+            0.75
+        )
 
         freq_formula.move_to(RIGHT * 3.5 + DOWN * 1.45)
 
         # Transform the final derivation into the spectrum formula
         self.play(
-            FadeTransformPieces(eq1, time_formula),
-            FadeTransformPieces(eq8, freq_formula),
+            FadeTransform(eq1, time_formula),
+            FadeTransform(eq8, freq_formula),
             run_time=1.5,
         )
 
@@ -155,7 +158,9 @@ class FourierRect(Scene):
             width = T.get_value()
 
             return time_axes.plot(
-                lambda t: rect(t / width),
+                lambda t: (
+                    rect(t / width) if mode.get_value() < 0.5 else np.sinc(t / width)
+                ),
                 x_range=[-4, 4],
                 color=BLUE,
                 stroke_width=3,
@@ -169,14 +174,18 @@ class FourierRect(Scene):
         # ================================================
 
         def make_spectrum():
-
             width = T.get_value()
 
             return freq_axes.plot(
-                lambda f: width * abs(np.sinc(width * f)),
+                lambda f: (
+                    width * abs(np.sinc(width * f))
+                    if mode.get_value() < 0.5
+                    else width * rect(width * f)
+                ),
                 x_range=[-4, 4],
                 color=YELLOW,
                 stroke_width=3,
+                use_smoothing=False,
             )
 
         spectrum = always_redraw(make_spectrum)
@@ -186,18 +195,14 @@ class FourierRect(Scene):
         # ================================================
 
         width_text = always_redraw(
-            lambda: (
-                MathTex(rf"T={T.get_value():.2f}")
-                .scale(0.7)
-                .to_edge(UP, buff=0.5)
-            )
+            lambda: MathTex(rf"T={T.get_value():.2f}").scale(0.7).to_edge(UP, buff=0.5)
         )
 
         self.play(
             Write(pulse),
             Create(spectrum),
             FadeIn(width_text),
-            run_time=1.5,
+            run_time=2,
         )
 
         self.wait(2)
@@ -263,7 +268,121 @@ class FourierRect(Scene):
         )
 
         self.play(
-            T.animate.set_value(2.5),
+            T.animate.set_value(2.65),
+            run_time=4,
+            rate_func=smooth,
+        )
+
+        self.play(
+            FadeOut(expand_text),
+            Write(reverse_relation),
+        )
+
+        self.wait(3)
+
+        self.play(
+            FadeOut(pulse),
+            FadeOut(spectrum),
+            FadeOut(reverse_relation),
+        )
+
+        # ================================================
+        # 9. Reverse Fourier Transform
+        # ================================================
+
+        reverse_time_formula = (
+            MathTex(r"x(t)=", r"\operatorname{sinc}", r"\left(\frac{t}{T}\right)")
+            .scale(0.75)
+            .move_to(time_formula)
+        )
+
+        reverse_freq_formula = (
+            MathTex(r"|X(f)|=T|", r"\operatorname{rect}", r"(Tf)|")
+            .scale(0.75)
+            .move_to(freq_formula)
+        )
+
+        self.play(
+            ReplacementTransform(time_formula[1], reverse_freq_formula[1]),
+            ReplacementTransform(freq_formula[1], reverse_time_formula[1]),
+        )
+
+        # Switch the plots to the reverse Fourier pair
+        mode.set_value(1)
+
+        pulse.update()
+        spectrum.update()
+
+        self.play(
+            Write(pulse),
+            FadeIn(spectrum),
+            run_time=1.5,
+        )
+
+        self.wait(2)
+
+        # ================================================
+        # 10. Time Compression
+        # ================================================
+
+        compress_text = Text(
+            "Time Compression",
+            font_size=24,
+            color=BLUE,
+        ).to_edge(DOWN, buff=0.4)
+
+        relation = (
+            MathTex(
+                r"\Delta t\downarrow"
+                r"\quad\Longrightarrow\quad"
+                r"\Delta f\uparrow"
+            )
+            .scale(0.85)
+            .to_edge(DOWN, buff=0.4)
+        )
+
+        self.play(FadeIn(compress_text))
+
+        self.play(
+            T.animate.set_value(0.65),
+            run_time=4,
+            rate_func=smooth,
+        )
+
+        self.play(
+            FadeOut(compress_text),
+            Write(relation),
+        )
+
+        self.wait(2)
+
+        # ================================================
+        # 11. Time Expansion
+        # ================================================
+
+        expand_text = Text(
+            "Time Expansion",
+            font_size=24,
+            color=BLUE,
+        ).to_edge(DOWN, buff=0.4)
+
+        reverse_relation = (
+            MathTex(
+                r"\Delta t\uparrow"
+                r"\quad\Longrightarrow\quad"
+                r"\Delta f\downarrow"
+            )
+            .scale(0.85)
+            .to_edge(DOWN, buff=0.4)
+        )
+
+        self.play(
+            FadeOut(relation),
+            FadeIn(expand_text),
+        )
+
+        self.play(
+            T.animate.set_value(2.6),
             run_time=4,
             rate_func=smooth,
         )
